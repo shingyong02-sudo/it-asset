@@ -2,6 +2,9 @@
 import { CONFIG } from './config.js';
 import { sb, state, $, esc, toast, errText, canWrite, isAdmin, ROLE_LABEL, modal } from './core.js';
 import { hostListView } from './hostlist.js';
+import { mountCaptcha } from './captcha.js';
+const apCap = mountCaptcha($('#apCaptcha'));
+const rsCap = mountCaptcha($('#rsCaptcha'));
 import { assetsView, peopleView, hostsView, vendorsView, tasksView, kbView } from './entities.js';
 import { dashboardView, auditView, usersView, requestsView, importView } from './secure.js';
 
@@ -105,6 +108,7 @@ $('#resetForm').addEventListener('submit', async (e) => {
   const msg = $('#rsMsg'); const btn = $('#rsBtn');
   msg.style.color = ''; msg.textContent = '';
   if ($('#rsWebsite').value) return;
+  if (!rsCap.verify()) { msg.textContent = '驗證碼不正確'; rsCap.refresh(); return; }
   const pw = $('#rsPw').value;
   if (pw.length < 8) { msg.textContent = '密碼至少 8 個字元'; return; }
   if (pw !== $('#rsPw2').value) { msg.textContent = '兩次密碼不一致'; return; }
@@ -113,6 +117,7 @@ $('#resetForm').addEventListener('submit', async (e) => {
     p_email: $('#rsEmail').value.trim(), p_name: $('#rsName').value.trim(), p_ext: $('#rsExt').value.trim(), p_password: pw,
   });
   btn.disabled = false;
+  rsCap.refresh();
   if (error) { msg.textContent = errText(error); return; }
   $('#resetForm').reset();
   msg.style.color = 'var(--ok, #2e7d32)';
@@ -125,6 +130,7 @@ $('#applyForm').addEventListener('submit', async (e) => {
   const msg = $('#apMsg'); const btn = $('#apBtn');
   msg.style.color = ''; msg.textContent = '';
   if ($('#apWebsite').value) return;                       // 機器人陷阱欄位
+  if (!apCap.verify()) { msg.textContent = '驗證碼不正確'; apCap.refresh(); return; }
   const pw = $('#apPw').value;
   if (pw.length < 8) { msg.textContent = '密碼至少 8 個字元'; return; }
   if (pw !== $('#apPw2').value) { msg.textContent = '兩次密碼不一致'; return; }
@@ -134,6 +140,7 @@ $('#applyForm').addEventListener('submit', async (e) => {
     p_dept: $('#apDept').value.trim(), p_password: pw,
   });
   btn.disabled = false;
+  apCap.refresh();
   if (error) { msg.textContent = errText(error); return; }
   $('#applyForm').reset();
   msg.style.color = 'var(--ok, #2e7d32)';
