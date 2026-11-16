@@ -20,6 +20,42 @@
       <button class="btn primary" type="submit" id="loginBtn">登入</button>
       <p id="loginMsg" class="msg"></p>
       <p class="hint">本系統僅限授權資訊人員使用，所有操作都會留下紀錄。</p>
+      <p class="hint"><a href="#/apply">還沒有帳號？申請帳號</a>　｜　<a href="#/reset">忘記密碼</a></p>
+    </form>
+  </div>
+
+  <!-- 忘記密碼 -->
+  <div id="resetView" class="login hidden">
+    <form id="resetForm" class="login-card" autocomplete="off">
+      <h1>忘記密碼</h1>
+      <p class="sub">輸入新密碼送出後，需由管理者確認身分（會以分機聯絡）並核准，新密碼才會生效。</p>
+      <label>Email（登入帳號）<input type="email" id="rsEmail" required maxlength="120" autocomplete="username" /></label>
+      <label>姓名<input id="rsName" required maxlength="40" /></label>
+      <label>分機<input id="rsExt" required maxlength="20" inputmode="numeric" /></label>
+      <label>新密碼（至少 8 字元）<input type="password" id="rsPw" required minlength="8" maxlength="72" autocomplete="new-password" /></label>
+      <label>再輸入一次新密碼<input type="password" id="rsPw2" required minlength="8" maxlength="72" autocomplete="new-password" /></label>
+      <input id="rsWebsite" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true" />
+      <button class="btn primary" type="submit" id="rsBtn">送出重設申請</button>
+      <p id="rsMsg" class="msg"></p>
+      <p class="hint"><a href="#/">返回登入</a></p>
+    </form>
+  </div>
+
+  <!-- 申請帳號 -->
+  <div id="applyView" class="login hidden">
+    <form id="applyForm" class="login-card" autocomplete="off">
+      <h1>申請帳號</h1>
+      <p class="sub">送出後由管理者審核並指定權限，核准後即可用下方 Email 與密碼登入。</p>
+      <label>姓名<input id="apName" required maxlength="40" /></label>
+      <label>分機<input id="apExt" required maxlength="20" inputmode="numeric" /></label>
+      <label>單位<input id="apDept" required maxlength="60" /></label>
+      <label>Email（登入帳號）<input type="email" id="apEmail" required maxlength="120" autocomplete="username" /></label>
+      <label>密碼（至少 8 字元）<input type="password" id="apPw" required minlength="8" maxlength="72" autocomplete="new-password" /></label>
+      <label>再輸入一次密碼<input type="password" id="apPw2" required minlength="8" maxlength="72" autocomplete="new-password" /></label>
+      <input id="apWebsite" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true" />
+      <button class="btn primary" type="submit" id="apBtn">送出申請</button>
+      <p id="apMsg" class="msg"></p>
+      <p class="hint"><a href="#/">返回登入</a></p>
     </form>
   </div>
 
