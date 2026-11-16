@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex,nofollow" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.supabase.co; base-uri 'none'; form-action 'self'" />
+        content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; base-uri 'none'; form-action 'self'" />
   <title>資訊資產管控系統｜杏和醫療體系</title>
   <link rel="stylesheet" href="css/app.css" />
 </head>
@@ -78,7 +78,7 @@
       <header class="top">
         <button class="btn ghost menu-btn" id="menuBtn" aria-label="選單">☰</button>
         <h2 id="pageTitle"></h2>
-        <div class="who"><span id="whoLabel"></span><button class="btn ghost" id="logoutBtn">登出</button></div>
+        <div class="who"><span class="tag ok online" id="onlineLabel" title="目前上線人數">上線 0 人</span><span id="whoLabel"></span><button class="btn ghost" id="pwBtn">修改密碼</button><button class="btn ghost" id="logoutBtn">登出</button></div>
       </header>
       <main id="content"></main>
     </div>
