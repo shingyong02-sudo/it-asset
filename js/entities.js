@@ -4,6 +4,12 @@ import { crudView } from './crud.js';
 import { openCredentials } from './secure.js';
 
 const siteOpts = () => state.sites.map((s) => [s.id, s.name]);
+// 院區分頁籤：固定順序 杏和醫院、杏永醫院、護理之家、診所（其他院區接在後面）
+const SITE_ORDER = ['杏和醫院', '杏永醫院', '護理之家', '診所'];
+export const siteTabs = () => {
+  const rank = (s) => { const i = SITE_ORDER.indexOf(s.name); return i < 0 ? 99 : i; };
+  return [...state.sites].sort((a, b) => rank(a) - rank(b)).map((s) => ({ label: s.name, values: [s.id] }));
+};
 export const TYPE_LABEL = { pc: '電腦', printer: '印表機', network: '網路設備', server: '主機／伺服器', camera: '攝影機', access: '門禁', parking: '停管', other: '其他' };
 export const STATUS_LABEL = { in_use: '使用中', spare: '備品', repair: '維修中', retired: '已報廢', lost: '遺失' };
 const EOL = /(^XP|WIN7|VISTA|SERVER2003|SERVER2008)/i;
@@ -13,15 +19,20 @@ const opts = (o) => Object.entries(o);
 export const assetsView = crudView({
   table: 'assets', label: '資產台帳', select: '*, person:people(name)',
   search: ['name', 'ip_text', 'unit', 'location', 'brand_model', 'floor', 'serial_no', 'notes'],
-  order: ['updated_at', false],
+  orders: [['ip', true, true], ['name', true]],          // IP 由小到大（無 IP 排最後），再依名稱
+  pageSize: 100, rowNo: true,
   defaults: { site_id: 2, asset_type: 'pc', status: 'in_use' },
+  tabGroups: [
+    { field: 'site_id', items: siteTabs },
+    { field: 'asset_type', items: () => [
+      { label: '電腦', values: ['pc'] }, { label: '印表機', values: ['printer'] }, { label: '網路設備', values: ['network'] },
+      { label: '中控（攝影機／門禁／停管）', values: ['camera', 'access', 'parking'] }, { label: '其他（主機／其他）', values: ['server', 'other'] },
+    ] },
+  ],
   filters: [
-    { key: 'site_id', label: '院區', options: siteOpts },
-    { key: 'asset_type', label: '類型', options: () => opts(TYPE_LABEL) },
     { key: 'status', label: '狀態', options: () => opts(STATUS_LABEL) },
   ],
   columns: [
-    { key: 'site_id', label: '院區', fmt: (r) => esc(siteName(r.site_id)) },
     { key: 'asset_type', label: '類型', fmt: (r) => esc(TYPE_LABEL[r.asset_type] || r.asset_type) },
     { key: 'name', label: '名稱' },
     { key: 'floor', label: '樓層' },

@@ -217,9 +217,11 @@ export async function usersView(root) {
   root.innerHTML = `
     <div class="bar"><span class="muted">人員離職時請「停用」帳號（紀錄會永久保留，不會刪除）。</span><span class="grow"></span>
       <button class="btn primary" id="btnNewUser">＋ 新增使用者</button></div>
-    <div class="table-wrap"><table><thead><tr><th>Email</th><th>顯示名稱</th><th>角色</th><th>啟用</th><th>建立時間</th><th></th></tr></thead><tbody>
+    <div class="table-wrap"><table><thead><tr><th>Email</th><th>顯示名稱</th><th>單位</th><th>分機</th><th>角色</th><th>啟用</th><th>建立時間</th><th></th></tr></thead><tbody>
     ${data.map((u) => `<tr data-id="${esc(u.id)}"><td>${esc(u.email)}</td>
       <td><input data-k="display_name" value="${esc(u.display_name || '')}" style="min-width:120px" /></td>
+      <td><input data-k="dept" value="${esc(u.dept || '')}" style="min-width:100px" /></td>
+      <td><input data-k="ext" value="${esc(u.ext || '')}" style="min-width:70px" /></td>
       <td><select data-k="role"><option value="">（未指派）</option>${Object.entries(ROLE_LABEL).map(([k, v]) => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${v}</option>`).join('')}</select></td>
       <td><select data-k="active"><option value="true" ${u.active ? 'selected' : ''}>啟用</option><option value="false" ${!u.active ? 'selected' : ''}>停用</option></select></td>
       <td>${esc(fmtTime(u.created_at))}</td>
@@ -259,7 +261,8 @@ export async function usersView(root) {
     const role = tr.querySelector('[data-k=role]').value || null;
     const active = tr.querySelector('[data-k=active]').value === 'true';
     if (active && !role) return toast('啟用前請先指派角色', true);
-    const { data: res, error: e2 } = await sb.from('profiles').update({ role, active, display_name: tr.querySelector('[data-k=display_name]').value.trim() || null }).eq('id', id).select();
+    const { data: res, error: e2 } = await sb.from('profiles').update({ role, active, display_name: tr.querySelector('[data-k=display_name]').value.trim() || null,
+      dept: tr.querySelector('[data-k=dept]').value.trim() || null, ext: tr.querySelector('[data-k=ext]').value.trim() || null }).eq('id', id).select();
     if (e2) return toast(errText(e2), true);
     if (!res?.length) return toast('儲存失敗：沒有權限', true);
     toast('✓ 已儲存');

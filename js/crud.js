@@ -17,8 +17,13 @@ export function crudView(cfg) {
     if (cfg.fields.some((f) => f.type === 'person')) await loadPeople(true);
     let page = 0, kw = '', total = 0;
     const filterVals = {};
+    const PG = cfg.pageSize || PAGE;
+    // 分頁籤群組（例：院區、設備類別）；每組一次選一項
+    const groups = (cfg.tabGroups || []).map((g) => ({ field: g.field, items: g.items(), sel: 0 }));
 
     root.innerHTML = `
+      ${groups.length ? `<div id="tabGroups">${groups.map((g, gi) => `<div class="tabs" data-g="${gi}">${g.items.map((it, ii) =>
+        `<button type="button" class="tab ${ii === 0 ? 'active' : ''}" data-i="${ii}">${esc(it.label)}</button>`).join('')}</div>`).join('')}</div>` : ''}
       <div class="bar">
         <input type="search" id="kw" placeholder="搜尋${esc(cfg.label)}…" />
         <span id="filters" class="bar" style="margin:0"></span>
@@ -26,7 +31,7 @@ export function crudView(cfg) {
         <button class="btn" id="btnExport">匯出 XLSX</button>
         ${canWrite() && !cfg.readOnly ? `<button class="btn primary" id="btnAdd">＋ 新增</button>` : ''}
       </div>
-      <div class="table-wrap"><table><thead><tr>${cfg.columns.map((c) => `<th>${esc(c.label)}</th>`).join('')}<th>操作</th></tr></thead>
+      <div class="table-wrap"><table><thead><tr>${cfg.rowNo ? '<th>編號</th>' : ''}${cfg.columns.map((c) => `<th>${esc(c.label)}</th>`).join('')}<th>操作</th></tr></thead>
       <tbody id="rows"></tbody></table></div>
       <div class="pager"><span id="count"></span><button class="btn sm" id="prev">上一頁</button><span id="pageNo"></span><button class="btn sm" id="next">下一頁</button></div>`;
 
@@ -41,22 +46,33 @@ export function crudView(cfg) {
     function buildQuery(forExport = false) {
       let q = sb.from(cfg.table).select(cfg.select || '*', forExport ? {} : { count: 'exact' });
       for (const [k, v] of Object.entries(filterVals)) if (v !== '' && v !== undefined) q = q.eq(k, v);
+      for (const g of groups) {
+        const vals = g.items[g.sel]?.values;
+        if (vals?.length === 1) q = q.eq(g.field, vals[0]); else if (vals?.length) q = q.in(g.field, vals);
+      }
       const k = cleanKw(kw);
       if (k) q = q.or(cfg.search.map((c) => `${c}.ilike.%${k}%`).join(','));
-      const [oc, asc] = cfg.order || ['created_at', false];
-      q = q.order(oc, { ascending: asc });
+      const orders = cfg.orders || [cfg.order || ['created_at', false]];
+      for (const [oc, asc, nullsLast] of orders) q = q.order(oc, { ascending: asc, ...(nullsLast ? { nullsFirst: false } : {}) });
       return q;
     }
 
+    root.querySelectorAll('.tabs').forEach((el) => el.addEventListener('click', (e) => {
+      const b = e.target.closest('.tab'); if (!b) return;
+      groups[Number(el.dataset.g)].sel = Number(b.dataset.i);
+      el.querySelectorAll('.tab').forEach((x) => x.classList.toggle('active', x === b));
+      page = 0; load();
+    }));
+
     async function load() {
-      const { data, error, count } = await buildQuery().range(page * PAGE, page * PAGE + PAGE - 1);
+      const { data, error, count } = await buildQuery().range(page * PG, page * PG + PG - 1);
       if (error) return toast(errText(error), true);
       total = count ?? data.length;
       const body = $('#rows', root);
       if (!data.length) {
-        body.innerHTML = `<tr><td colspan="${cfg.columns.length + 1}" class="empty">沒有資料</td></tr>`;
+        body.innerHTML = `<tr><td colspan="${cfg.columns.length + 1 + (cfg.rowNo ? 1 : 0)}" class="empty">沒有資料</td></tr>`;
       } else {
-        body.innerHTML = data.map((r, i) => `<tr data-i="${i}">${cfg.columns.map((c) =>
+        body.innerHTML = data.map((r, i) => `<tr data-i="${i}">${cfg.rowNo ? `<td>${page * PG + i + 1}</td>` : ''}${cfg.columns.map((c) =>
           `<td class="${c.wrap ? 'wrap' : ''}">${c.fmt ? c.fmt(r) : esc(r[c.key])}</td>`).join('')}
           <td>${actionsHtml(r)}</td></tr>`).join('');
         body.querySelectorAll('button[data-act]').forEach((b) => b.addEventListener('click', () => {
@@ -68,7 +84,7 @@ export function crudView(cfg) {
           else cfg.rowActions[Number(act.slice(1))].run(r, load);
         }));
       }
-      const pages = Math.max(1, Math.ceil(total / PAGE));
+      const pages = Math.max(1, Math.ceil(total / PG));
       $('#count', root).textContent = `共 ${total} 筆`;
       $('#pageNo', root).textContent = `${page + 1} / ${pages}`;
       $('#prev', root).disabled = page === 0;
