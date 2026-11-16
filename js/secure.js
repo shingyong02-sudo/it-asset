@@ -215,8 +215,8 @@ export async function usersView(root) {
   const { data, error } = await sb.from('profiles').select('*').order('created_at');
   if (error) { root.innerHTML = `<p class="empty">${esc(errText(error))}</p>`; return; }
   root.innerHTML = `
-    <div class="note" style="margin-bottom:12px">新增使用者：先到 Supabase 後台 Authentication → Users → Add user 建立帳號（Email＋密碼），對方第一次出現在這裡時處於「未啟用」，由您指派角色並啟用。
-      人員離職時請「停用」帳號（紀錄會永久保留，不會刪除）。</div>
+    <div class="bar"><span class="muted">人員離職時請「停用」帳號（紀錄會永久保留，不會刪除）。</span><span class="grow"></span>
+      <button class="btn primary" id="btnNewUser">＋ 新增使用者</button></div>
     <div class="table-wrap"><table><thead><tr><th>Email</th><th>顯示名稱</th><th>角色</th><th>啟用</th><th>建立時間</th><th></th></tr></thead><tbody>
     ${data.map((u) => `<tr data-id="${esc(u.id)}"><td>${esc(u.email)}</td>
       <td><input data-k="display_name" value="${esc(u.display_name || '')}" style="min-width:120px" /></td>
@@ -230,6 +230,29 @@ export async function usersView(root) {
       <tr><td>管理者</td><td class="wrap">全部功能：管理使用者、刪除資料、查看歷史密碼、匯入帳密、驗證稽核紀錄。</td></tr>
       <tr><td>資訊人員</td><td class="wrap">新增／修改資產、人員、主機、廠商、交辦；可查看與變更密碼（每次需重新驗證並留下原因）。</td></tr>
       <tr><td>稽核員</td><td class="wrap">唯讀：可查詢所有資料與稽核紀錄、驗證紀錄完整性；看不到密碼。</td></tr></tbody></table></div>`;
+  $('#btnNewUser', root).addEventListener('click', () => {
+    modal('新增使用者', `<div class="form-grid">
+      <label class="full">Email（登入帳號）<input type="email" data-k="email" autocomplete="off" /></label>
+      <label>顯示名稱<input data-k="name" /></label>
+      <label>角色<select data-k="role">${Object.entries(ROLE_LABEL).map(([k, v]) => `<option value="${k}" ${k === 'it' ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      <label class="full">初始密碼（至少 12 字元，請交給對方後請他自行更換）<input type="password" data-k="pw" autocomplete="new-password" /></label></div>`, {
+      buttons: [{ label: '取消' }, {
+        label: '建立', cls: 'primary', onClick: async (mm) => {
+          const v = (k) => mm.$(`[data-k=${k}]`).value.trim();
+          const pw = mm.$('[data-k=pw]').value;
+          if (!v('email')) { toast('請填寫 Email', true); return true; }
+          if (pw.length < 12) { toast('密碼至少 12 個字元', true); return true; }
+          const r = await reauth({ title: '確認建立使用者', note: '需要再次驗證您的登入密碼。', withReason: false });
+          if (!r) return true;
+          try {
+            await rpc('admin_create_user', { p_email: v('email'), p_password: pw, p_name: v('name'), p_role: v('role') });
+            toast('✓ 已建立使用者'); mm.close(); usersView(root);
+          } catch (e) { toast(errText(e), true); }
+          return true;
+        },
+      }],
+    });
+  });
   root.querySelectorAll('button[data-a]').forEach((b) => b.addEventListener('click', async () => {
     const tr = b.closest('tr'); const id = tr.dataset.id;
     if (b.dataset.a === 'log') return showHistory('profiles', id, tr.children[0].textContent);
