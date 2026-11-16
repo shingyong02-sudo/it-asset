@@ -235,13 +235,13 @@ export async function usersView(root) {
       <label class="full">Email（登入帳號）<input type="email" data-k="email" autocomplete="off" /></label>
       <label>顯示名稱<input data-k="name" /></label>
       <label>角色<select data-k="role">${Object.entries(ROLE_LABEL).map(([k, v]) => `<option value="${k}" ${k === 'it' ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
-      <label class="full">初始密碼（至少 12 字元）<input type="password" data-k="pw" autocomplete="new-password" /></label></div>`, {
+      <label class="full">初始密碼（至少 8 字元）<input type="password" data-k="pw" autocomplete="new-password" /></label></div>`, {
       buttons: [{ label: '取消' }, {
         label: '建立', cls: 'primary', onClick: async (mm) => {
           const v = (k) => mm.$(`[data-k=${k}]`).value.trim();
           const pw = mm.$('[data-k=pw]').value;
           if (!v('email')) { toast('請填寫 Email', true); return true; }
-          if (pw.length < 12) { toast('密碼至少 12 個字元', true); return true; }
+          if (pw.length < 8) { toast('密碼至少 8 個字元', true); return true; }
           const r = await reauth({ title: '確認建立使用者', note: '需要再次驗證您的登入密碼。', withReason: false });
           if (!r) return true;
           try {
