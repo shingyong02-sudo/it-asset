@@ -34,6 +34,7 @@
       <label>分機<input id="rsExt" required maxlength="20" inputmode="numeric" /></label>
       <label>新密碼（至少 8 字元）<input type="password" id="rsPw" required minlength="8" maxlength="72" autocomplete="new-password" /></label>
       <label>再輸入一次新密碼<input type="password" id="rsPw2" required minlength="8" maxlength="72" autocomplete="new-password" /></label>
+      <div class="captcha" id="rsCaptcha"></div>
       <input id="rsWebsite" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true" />
       <button class="btn primary" type="submit" id="rsBtn">送出重設申請</button>
       <p id="rsMsg" class="msg"></p>
@@ -52,6 +53,7 @@
       <label>Email（登入帳號）<input type="email" id="apEmail" required maxlength="120" autocomplete="username" /></label>
       <label>密碼（至少 8 字元）<input type="password" id="apPw" required minlength="8" maxlength="72" autocomplete="new-password" /></label>
       <label>再輸入一次密碼<input type="password" id="apPw2" required minlength="8" maxlength="72" autocomplete="new-password" /></label>
+      <div class="captcha" id="apCaptcha"></div>
       <input id="apWebsite" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true" />
       <button class="btn primary" type="submit" id="apBtn">送出申請</button>
       <p id="apMsg" class="msg"></p>
