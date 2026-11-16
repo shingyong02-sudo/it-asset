@@ -5,6 +5,7 @@ import { hostListView } from './hostlist.js';
 import { mountCaptcha } from './captcha.js';
 const apCap = mountCaptcha($('#apCaptcha'));
 const rsCap = mountCaptcha($('#rsCaptcha'));
+const lgCap = mountCaptcha($('#lgCaptcha'));
 import { assetsView, peopleView, hostsView, vendorsView, tasksView, kbView } from './entities.js';
 import { dashboardView, auditView, usersView, requestsView, importView } from './secure.js';
 
@@ -156,9 +157,12 @@ function stopIdle() { EV.forEach((e) => window.removeEventListener(e, bump)); cl
 $('#loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = $('#loginBtn'); const msg = $('#loginMsg');
-  btn.disabled = true; msg.textContent = '';
+  msg.textContent = '';
+  if (!lgCap.verify()) { msg.textContent = '驗證碼不正確'; lgCap.refresh(); return; }
+  btn.disabled = true;
   const { data, error } = await sb.auth.signInWithPassword({ email: $('#loginEmail').value.trim(), password: $('#loginPassword').value });
   btn.disabled = false;
+  lgCap.refresh();
   if (error) { msg.textContent = 'Email 或密碼不正確'; return; }
   $('#loginPassword').value = '';
   enter(data.session);
