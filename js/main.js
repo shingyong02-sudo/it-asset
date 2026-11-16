@@ -2,7 +2,7 @@
 import { CONFIG } from './config.js';
 import { sb, state, $, esc, toast, errText, canWrite, isAdmin, ROLE_LABEL } from './core.js';
 import { assetsView, peopleView, hostsView, vendorsView, tasksView, kbView } from './entities.js';
-import { dashboardView, auditView, usersView, importView } from './secure.js';
+import { dashboardView, auditView, usersView, requestsView, importView } from './secure.js';
 
 const ROUTES = [
   { id: 'dashboard', label: '總覽', view: dashboardView },
@@ -14,10 +14,12 @@ const ROUTES = [
   { id: 'kb', label: '知識庫', view: kbView },
   { id: 'audit', label: '稽核紀錄', view: auditView },
   { id: 'users', label: '使用者管理', view: usersView, admin: true },
+  { id: 'requests', label: '帳號申請', view: requestsView, admin: true },
   { id: 'import', label: '匯入帳密', view: importView, admin: true },
 ];
 
-const show = (id) => ['loginView', 'pendingView', 'appView'].forEach((v) => $('#' + v).classList.toggle('hidden', v !== id));
+const show = (id) => ['loginView', 'applyView', 'resetView', 'pendingView', 'appView'].forEach((v) => $('#' + v).classList.toggle('hidden', v !== id));
+const loggedOutView = () => (location.hash === '#/apply' ? 'applyView' : location.hash === '#/reset' ? 'resetView' : 'loginView');
 const allowed = () => ROUTES.filter((r) => !r.admin || isAdmin());
 
 async function route() {
@@ -50,6 +52,47 @@ async function logout() {
   show('loginView');
 }
 
+// 忘記密碼（未登入可用）
+$('#resetForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#rsMsg'); const btn = $('#rsBtn');
+  msg.style.color = ''; msg.textContent = '';
+  if ($('#rsWebsite').value) return;
+  const pw = $('#rsPw').value;
+  if (pw.length < 8) { msg.textContent = '密碼至少 8 個字元'; return; }
+  if (pw !== $('#rsPw2').value) { msg.textContent = '兩次密碼不一致'; return; }
+  btn.disabled = true;
+  const { error } = await sb.rpc('submit_password_reset', {
+    p_email: $('#rsEmail').value.trim(), p_name: $('#rsName').value.trim(), p_ext: $('#rsExt').value.trim(), p_password: pw,
+  });
+  btn.disabled = false;
+  if (error) { msg.textContent = errText(error); return; }
+  $('#resetForm').reset();
+  msg.style.color = 'var(--ok, #2e7d32)';
+  msg.textContent = '✓ 已送出，管理者確認身分並核准後，請用新密碼登入。';
+});
+
+// 申請帳號（未登入可用）
+$('#applyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#apMsg'); const btn = $('#apBtn');
+  msg.style.color = ''; msg.textContent = '';
+  if ($('#apWebsite').value) return;                       // 機器人陷阱欄位
+  const pw = $('#apPw').value;
+  if (pw.length < 8) { msg.textContent = '密碼至少 8 個字元'; return; }
+  if (pw !== $('#apPw2').value) { msg.textContent = '兩次密碼不一致'; return; }
+  btn.disabled = true;
+  const { error } = await sb.rpc('submit_account_request', {
+    p_email: $('#apEmail').value.trim(), p_name: $('#apName').value.trim(), p_ext: $('#apExt').value.trim(),
+    p_dept: $('#apDept').value.trim(), p_password: pw,
+  });
+  btn.disabled = false;
+  if (error) { msg.textContent = errText(error); return; }
+  $('#applyForm').reset();
+  msg.style.color = 'var(--ok, #2e7d32)';
+  msg.textContent = '✓ 已送出申請，請等候管理者核准。';
+});
+
 // 閒置自動登出
 let idleTimer; const bump = () => { clearTimeout(idleTimer); idleTimer = setTimeout(async () => { await logout(); toast('閒置過久，已自動登出', true); }, CONFIG.idleMinutes * 60000); };
 const EV = ['click', 'keydown', 'mousemove', 'touchstart'];
@@ -69,9 +112,12 @@ $('#loginForm').addEventListener('submit', async (e) => {
 $('#logoutBtn').addEventListener('click', logout);
 $('#pendingLogout').addEventListener('click', logout);
 $('#menuBtn').addEventListener('click', () => $('#side').classList.toggle('open'));
-window.addEventListener('hashchange', () => { if (state.profile) route(); });
+window.addEventListener('hashchange', () => {
+  if (state.profile) route();
+  else if (!state.session) show(loggedOutView());
+});
 
 (async () => {
   const { data } = await sb.auth.getSession();
-  if (data.session) enter(data.session); else show('loginView');
+  if (data.session) enter(data.session); else show(loggedOutView());
 })();

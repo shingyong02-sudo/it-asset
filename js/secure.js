@@ -266,6 +266,36 @@ export async function usersView(root) {
   }));
 }
 
+// ======================= 帳號申請／忘記密碼審核（管理者）=======================
+export async function requestsView(root) {
+  let rows;
+  try { rows = await rpc('list_account_requests'); } catch (e) { root.innerHTML = `<p class="empty">${esc(errText(e))}</p>`; return; }
+  const KIND = { new: '申請帳號', reset: '忘記密碼' };
+  const ST = { pending: '待處理', approved: '已核准', rejected: '已退回' };
+  root.innerHTML = `
+    <div class="bar"><span class="muted">申請帳號：核准時指定角色。忘記密碼：請先用分機確認是本人再核准。申請者的密碼只存雜湊，管理者看不到。</span></div>
+    <div class="table-wrap"><table><thead><tr><th>類型</th><th>Email</th><th>姓名</th><th>分機</th><th>單位</th><th>申請時間</th><th>狀態／角色</th><th></th></tr></thead><tbody>
+    ${rows.length ? rows.map((r) => `<tr data-id="${r.id}" data-kind="${esc(r.kind)}">
+      <td>${esc(KIND[r.kind] || r.kind)}</td><td>${esc(r.email)}</td><td>${esc(r.name)}</td><td>${esc(r.ext)}</td><td>${esc(r.dept || '—')}</td>
+      <td>${esc(fmtTime(r.created_at))}</td>
+      <td>${r.status === 'pending'
+        ? (r.kind === 'new' ? `<select data-k="role">${Object.entries(ROLE_LABEL).map(([k, v]) => `<option value="${k}" ${k === 'it' ? 'selected' : ''}>${v}</option>`).join('')}</select>` : '待處理')
+        : `${esc(ST[r.status])}${r.role ? '（' + esc(ROLE_LABEL[r.role] || r.role) + '）' : ''}`}</td>
+      <td>${r.status === 'pending' ? '<button class="btn sm primary" data-a="ok">核准</button> <button class="btn sm danger" data-a="no">退回</button>' : esc(r.note || '')}</td></tr>`).join('')
+      : '<tr><td colspan="8" class="empty">目前沒有申請</td></tr>'}
+    </tbody></table></div>`;
+  root.querySelectorAll('button[data-a]').forEach((b) => b.addEventListener('click', async () => {
+    const tr = b.closest('tr'); const id = Number(tr.dataset.id); const approve = b.dataset.a === 'ok';
+    const role = tr.querySelector('[data-k=role]')?.value || null;
+    const ok = await confirmDialog(`${approve ? '核准' : '退回'}「${tr.children[2].textContent}（${tr.children[1].textContent}）」的${tr.children[0].textContent}？`, { okLabel: approve ? '核准' : '退回', danger: !approve });
+    if (!ok) return;
+    const r = await reauth({ title: '確認處理申請', note: '需要再次驗證您的登入密碼。', withReason: false });
+    if (!r) return;
+    try { await rpc('decide_account_request', { p_id: id, p_approve: approve, p_role: role, p_note: null }); toast('✓ 已處理'); requestsView(root); }
+    catch (e) { toast(errText(e), true); }
+  }));
+}
+
 // ======================= 匯入帳密（管理者）=======================
 const cellText = (v) => {
   if (v == null) return '';
