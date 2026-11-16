@@ -223,7 +223,7 @@ export async function usersView(root) {
       <td><select data-k="role"><option value="">（未指派）</option>${Object.entries(ROLE_LABEL).map(([k, v]) => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${v}</option>`).join('')}</select></td>
       <td><select data-k="active"><option value="true" ${u.active ? 'selected' : ''}>啟用</option><option value="false" ${!u.active ? 'selected' : ''}>停用</option></select></td>
       <td>${esc(fmtTime(u.created_at))}</td>
-      <td><button class="btn sm primary" data-a="save">儲存</button> <button class="btn sm" data-a="log">紀錄</button></td></tr>`).join('')}
+      <td><button class="btn sm primary" data-a="save">儲存</button> <button class="btn sm" data-a="log">紀錄</button> <button class="btn sm" data-a="mfa">重設動態碼</button></td></tr>`).join('')}
     </tbody></table></div>
     <h3 class="sec">角色說明</h3>
     <div class="table-wrap"><table><thead><tr><th>角色</th><th>能做什麼</th></tr></thead><tbody>
@@ -256,6 +256,14 @@ export async function usersView(root) {
   root.querySelectorAll('button[data-a]').forEach((b) => b.addEventListener('click', async () => {
     const tr = b.closest('tr'); const id = tr.dataset.id;
     if (b.dataset.a === 'log') return showHistory('profiles', id, tr.children[0].textContent);
+    if (b.dataset.a === 'mfa') {
+      if (!(await confirmDialog(`確定重設「${tr.children[0].textContent}」的動態驗證碼？對方下次登入需重新掃描 QR Code（手機遺失或換機時使用）。`, { okLabel: '重設' }))) return;
+      const r = await reauth({ title: '重設動態驗證碼', note: '需要輸入您自己的動態驗證碼，並留下原因。' });
+      if (!r) return;
+      try { await rpc('admin_reset_mfa', { p_user_id: id, p_reason: r.reason }); toast('✓ 已重設，對方下次登入需重新設定'); }
+      catch (e) { toast(errText(e), true); }
+      return;
+    }
     const role = tr.querySelector('[data-k=role]').value || null;
     const active = tr.querySelector('[data-k=active]').value === 'true';
     if (active && !role) return toast('啟用前請先指派角色', true);
