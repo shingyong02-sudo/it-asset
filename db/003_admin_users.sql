@@ -12,7 +12,7 @@ begin
   if private.app_role() is distinct from 'admin' then raise exception '只有管理者可新增使用者'; end if;
   perform private.require_recent_login();
   if v_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then raise exception 'Email 格式不正確'; end if;
-  if length(coalesce(p_password, '')) < 12 then raise exception '密碼至少 12 個字元'; end if;
+  if length(coalesce(p_password, '')) < 8 then raise exception '密碼至少 8 個字元'; end if;
   if p_role not in ('admin','it','auditor') then raise exception '角色不正確'; end if;
   if exists (select 1 from auth.users where lower(email) = v_email) then raise exception '這個 Email 已經有帳號'; end if;
 
