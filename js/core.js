@@ -85,25 +85,13 @@ export function confirmDialog(message, { okLabel = '確定', danger = false } = 
   });
 }
 
-// 以動態驗證碼（TOTP）完成驗證：登入、重新確認身分都用這個
-export async function verifyTotp(code) {
-  const { data: f, error: e0 } = await sb.auth.mfa.listFactors();
-  if (e0) throw e0;
-  const factor = (f?.totp || []).find((x) => x.status === 'verified');
-  if (!factor) throw new Error('尚未設定動態驗證碼');
-  const { data: ch, error: e1 } = await sb.auth.mfa.challenge({ factorId: factor.id });
-  if (e1) throw e1;
-  const { error: e2 } = await sb.auth.mfa.verify({ factorId: factor.id, challengeId: ch.id, code: String(code).trim() });
-  if (e2) throw e2;
-}
-
-// 輸入動態驗證碼 + 填寫原因（查看／變更密碼、匯入前使用）
+// 重新輸入登入密碼 + 填寫原因（查看／變更密碼、匯入前使用）
 export function reauth({ title, note = '', withReason = true, secretLabel = '' }) {
   return new Promise((resolve) => {
     const m = modal(title, `
       ${note ? `<div class="note">${esc(note)}</div>` : ''}
       <div class="form-grid">
-        <label class="full">動態驗證碼（驗證 App 上的 6 位數字）<input type="text" id="ra_pw" inputmode="numeric" maxlength="6" autocomplete="one-time-code" /></label>
+        <label class="full">您的登入密碼（再次確認身分）<input type="password" id="ra_pw" autocomplete="current-password" /></label>
         ${secretLabel ? `<label class="full">${esc(secretLabel)}<input type="password" id="ra_secret" autocomplete="new-password" /></label>` : ''}
         ${withReason ? `<label class="full">原因（會寫入稽核紀錄，至少 4 字）<textarea id="ra_reason"></textarea></label>` : ''}
       </div>`, {
@@ -114,10 +102,12 @@ export function reauth({ title, note = '', withReason = true, secretLabel = '' }
             const pw = mm.$('#ra_pw').value;
             const reason = withReason ? mm.$('#ra_reason').value.trim() : '';
             const secret = secretLabel ? mm.$('#ra_secret').value : '';
-            if (!/^\d{6}$/.test(pw)) { toast('請輸入 6 位數的動態驗證碼', true); return true; }
+            if (!pw) { toast('請輸入登入密碼', true); return true; }
             if (withReason && reason.length < 4) { toast('請填寫原因（至少 4 字）', true); return true; }
             if (secretLabel && !secret) { toast('請輸入新密碼', true); return true; }
-            try { await verifyTotp(pw); } catch { toast('動態驗證碼不正確或已過期，請等下一組再試', true); return true; }
+            const { data, error } = await sb.auth.signInWithPassword({ email: state.session.user.email, password: pw });
+            if (error) { toast('登入密碼不正確', true); return true; }
+            state.session = data.session;
             resolve({ reason, secret });
             return false;
           },
