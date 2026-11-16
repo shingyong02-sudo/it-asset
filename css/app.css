@@ -22,6 +22,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .login-card .sub, .hint { color: var(--muted); margin: 0; font-size: 13px; }
 .login-card label { display: grid; gap: 6px; font-weight: 600; }
 .msg { color: var(--danger); min-height: 18px; margin: 0; font-size: 13px; }
+.login-card a { color: #2e7d32; }
 
 /* 版面 */
 .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
