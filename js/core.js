@@ -143,10 +143,12 @@ export const COL_LABEL = {
   os: '作業系統', office_license: 'OFFICE', purchase_date_raw: '購買日期', ip_text: 'IP', mac: 'MAC', serial_no: '序號',
   status: '狀態', person_id: '使用人', notes: '備註', dept: '部門', title: '職稱', employee_no: '員編', ext: '分機',
   left_at: '離職日', host_type: '類型', address: '位址／網址', owner_name: '負責人', active: '啟用', account: '帳號',
-  purpose: '用途', has_secret: '已設密碼', vendor: '廠商', contact_name: '聯絡人', phone: '電話', system_name: '系統',
+  asset_no: '財產編號', dept_id: '部門', custodian_id: '保管人', acquired_date: '取得日期', cost: '取得成本', salvage_value: '殘值',
+  useful_life_months: '耐用月數', scrapped_at: '報廢日', purpose: '用途', has_secret: '已設密碼', vendor: '廠商', contact_name: '聯絡人', phone: '電話', system_name: '系統',
   detail: '內容', progress_note: '進度', due_date: '期限', category: '分類', body: '內文', role: '角色', display_name: '顯示名稱', email: 'Email',
 };
-export const ACTION_LABEL = { INSERT: '新增', UPDATE: '修改', DELETE: '刪除', REVEAL: '查看密碼', SET_SECRET: '變更密碼', IMPORT: '匯入', RESET_MFA: '重設動態碼' };
+export const ACTION_LABEL = { INSERT: '新增', UPDATE: '修改', DELETE: '刪除', REVEAL: '查看密碼', SET_SECRET: '變更密碼', IMPORT: '匯入', RESET_MFA: '重設動態碼',
+  REQUEST_TRANSFER: '申請移轉', REQUEST_SCRAP: '申請報廢', APPROVE_TRANSFER: '核准移轉', APPROVE_SCRAP: '核准報廢', REJECT_TRANSFER: '退回移轉', REJECT_SCRAP: '退回報廢' };
 
 function fmtVal(k, v) {
   if (v === null || v === undefined || v === '') return '（空）';

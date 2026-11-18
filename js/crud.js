@@ -15,6 +15,7 @@ export function crudView(cfg) {
   return async function render(root) {
     await loadSites();
     if (cfg.fields.some((f) => f.type === 'person')) await loadPeople(true);
+    if (cfg.beforeRender) await cfg.beforeRender();
     let page = 0, kw = '', total = 0;
     const filterVals = {};
     const PG = cfg.pageSize || PAGE;
@@ -114,26 +115,27 @@ export function crudView(cfg) {
         const cur = f.type === 'bool' ? String(val ?? true) : String(v);
         input = `<select data-k="${f.key}">${(f.required || f.type === 'bool' ? '' : '<option value=""></option>')}${opts.map(([ov, ol]) =>
           `<option value="${esc(ov)}" ${String(ov) === cur ? 'selected' : ''}>${esc(ol)}</option>`).join('')}</select>`;
-      } else input = `<input data-k="${f.key}" type="${f.type === 'date' ? 'date' : 'text'}" value="${esc(v)}" />`;
+      } else input = `<input data-k="${f.key}" type="${f.type === 'date' ? 'date' : 'text'}" ${f.type === 'number' ? 'inputmode="numeric"' : ''} value="${esc(v)}" />`;
       return `<label class="${f.full ? 'full' : ''}"><span class="${req}">${esc(f.label)}</span>${input}</label>`;
     }
 
     function openForm(row) {
       const isNew = !row;
       const vals = row || { ...(cfg.defaults || {}) };
-      const m = modal(`${isNew ? '新增' : '編輯'}${cfg.label}`, `<div class="form-grid">${cfg.fields.map((f) => fieldHtml(f, vals[f.key])).join('')}</div>`, {
-        wide: cfg.fields.length > 8,
+      const fields = cfg.fields.filter((f) => isNew || !f.newOnly);   // newOnly：只在新增時填（之後須走簽核）
+      const m = modal(`${isNew ? '新增' : '編輯'}${cfg.label}`, `<div class="form-grid">${fields.map((f) => fieldHtml(f, vals[f.key])).join('')}</div>`, {
+        wide: fields.length > 8,
         buttons: [
           { label: '取消' },
           {
             label: '儲存', cls: 'primary', onClick: async (mm) => {
               const payload = {};
-              for (const f of cfg.fields) {
+              for (const f of fields) {
                 const el = mm.$(`[data-k="${f.key}"]`);
                 let v = el.value.trim();
                 if (f.required && !v) { toast(`請填寫「${f.label}」`, true); return true; }
                 if (v === '') v = null;
-                else if (f.type === 'site') v = Number(v);
+                else if (f.type === 'site' || f.type === 'number') { v = Number(v); if (Number.isNaN(v)) { toast(`「${f.label}」請輸入數字`, true); return true; } }
                 else if (f.type === 'bool') v = v === 'true';
                 payload[f.key] = v;
               }

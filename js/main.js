@@ -3,6 +3,7 @@ import { CONFIG } from './config.js';
 import { sb, state, $, esc, toast, errText, canWrite, isAdmin, ROLE_LABEL, modal } from './core.js';
 import { hostListView } from './hostlist.js';
 import { mountCaptcha } from './captcha.js';
+import { departmentsView, fixedAssetsView, approvalsView, qrView } from './fixed.js';
 const apCap = mountCaptcha($('#apCaptcha'));
 const rsCap = mountCaptcha($('#rsCaptcha'));
 const lgCap = mountCaptcha($('#lgCaptcha'));
@@ -12,7 +13,11 @@ import { dashboardView, auditView, usersView, requestsView, importView } from '.
 const ROUTES = [
   { id: 'dashboard', label: '總覽', view: dashboardView },
   { id: 'assets', label: '設備台帳（電腦／印表機／網路／中控）', view: assetsView },
-  { id: 'people', label: '人員', view: peopleView },
+  { id: 'fixed', label: '財產管理', view: fixedAssetsView },
+  { id: 'approvals', label: '簽核（移轉／報廢）', view: approvalsView },
+  { id: 'qr', label: 'QR Code 列印清單', view: qrView },
+  { id: 'depts', label: '部門／單位', view: departmentsView },
+  { id: 'people', label: '人員（保管人）', view: peopleView },
   { id: 'hostlist', label: '主機設備清單', view: hostListView },
   { id: 'hosts', label: '主機與系統帳密', view: hostsView },
   { id: 'vendors', label: '廠商聯絡', view: vendorsView },
