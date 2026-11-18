@@ -110,6 +110,19 @@ h3.sec { margin: 18px 0 10px; font-size: 15px; }
 .toast.show { opacity: 1; transform: translateX(-50%); }
 .toast.err { background: var(--danger); }
 
+/* QR Code 列印（A4，3 欄 × 8 列） */
+#printArea { display: none; }
+@media print {
+  @page { size: A4; margin: 8mm; }
+  body > *:not(#printArea) { display: none !important; }
+  #printArea { display: block; background: #fff; color: #000; }
+  .qr-page { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 34mm; gap: 0; page-break-after: always; }
+  .qr-page:last-child { page-break-after: auto; }
+  .qr-cell { display: flex; align-items: center; gap: 3mm; border: 0.2mm dashed #999; padding: 2mm; overflow: hidden; }
+  .qr-img { width: 26mm; height: 26mm; flex: none; } .qr-img svg { width: 100%; height: 100%; }
+  .qr-txt { font-size: 8pt; line-height: 1.3; word-break: break-all; }
+}
+
 @media (max-width: 800px) {
   .app { grid-template-columns: 1fr; }
   .side { position: fixed; left: -240px; width: 230px; z-index: 40; transition: left .2s; }
